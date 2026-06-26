@@ -3439,6 +3439,11 @@ async function pushToGitHub() {
     return;
   }
   
+  if (!repo.includes('/')) {
+    alert('اسم المستودع (Repo) يجب أن يحتوي على اسم المستخدم الخاص بك! مثال: aqy31/low');
+    return;
+  }
+  
   try {
     showToast('جاري تحضير الملف للرفع...', '⏳');
     
@@ -3521,7 +3526,11 @@ async function pushToGitHub() {
     showToast('تم رفع وتحديث الموقع أونلاين بنجاح! 🎉', '✅');
   } catch (err) {
     console.error(err);
-    alert(err.message);
+    if (err instanceof TypeError) {
+      alert('فشل الاتصال بسيرفر جيت هاب! تأكد من أن اسم المستودع صحيح تماماً (مثال: aqy31/low) وأنك متصل بالإنترنت. المتصفح يحظر الطلب إذا كان المستودع غير موجود.');
+    } else {
+      alert(err.message);
+    }
     showToast('حدث خطأ أثناء الرفع.', '❌');
   }
 }
@@ -3788,7 +3797,16 @@ function initEvents() {
   if (githubTokenInput && githubRepoInput) {
     const config = JSON.parse(localStorage.getItem('cuneiform_github_config')) || {};
     if (config.token) githubTokenInput.value = config.token;
-    if (config.repo) githubRepoInput.value = config.repo;
+    
+    if (config.repo) {
+      githubRepoInput.value = config.repo;
+    } else if (location.hostname.includes('github.io')) {
+      const owner = location.hostname.split('.')[0];
+      const pathParts = location.pathname.split('/').filter(p => p);
+      const repo = pathParts.length > 0 ? pathParts[0] : owner + '.github.io';
+      githubRepoInput.value = `${owner}/${repo}`;
+      localStorage.setItem('cuneiform_github_config', JSON.stringify({ token: config.token || '', repo: githubRepoInput.value }));
+    }
     
     const saveConfig = () => {
       localStorage.setItem('cuneiform_github_config', JSON.stringify({
