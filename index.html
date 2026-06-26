@@ -1099,16 +1099,17 @@ html, body {
   }
   .card-cuneiform { font-size: 2.5rem; }
   .practice-body { flex-direction: column; padding: 0.5rem; }
-  .stroke-panel { 
-    width: 100%; 
-    flex-direction: row;
-    overflow-x: auto;
-    overflow-y: hidden;
-    max-height: 80px;
-    padding: 0.5rem;
+  .stroke-panel, .stylus-panel { 
+    width: 100% !important; 
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: visible;
+    max-height: none;
+    padding: 1rem;
+    gap: 0.8rem !important;
   }
-  .stroke-list { flex-direction: row; }
-  .stroke-guide-title { display: none; }
+  .stroke-list { flex-direction: row; flex-wrap: wrap; max-height: none !important; }
+  .stroke-guide-title { display: block; }
   .info-card { display: none; }
   .stroke-item { min-width: fit-content; }
   .gallery-progress-bar { display: none; }
@@ -1691,8 +1692,9 @@ html, body {
           <div class="practice-meaning">صمم الخطوط وسيقوم المتصفح بتحديث كود الموقع تلقائياً</div>
         </div>
       </div>
-      <div class="practice-actions">
-        <button class="btn-action primary" id="btn-export-website">📥 تحميل الموقع المحدث (index.html)</button>
+      <div class="practice-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+        <button class="btn-action primary" id="btn-github-export">🌐 حفظ أونلاين (GitHub)</button>
+        <button class="btn-action" id="btn-export-website">💾 حفظ محلي</button>
       </div>
     </div>
 
@@ -1750,6 +1752,12 @@ html, body {
           <label style="color: var(--gold-light); font-size: 0.75rem; font-weight: bold;">🖼️ صورة مرجعية للشف (خلفية)</label>
           <input type="file" id="creator-image-input" class="form-input" accept="image/*" style="font-size: 0.7rem; padding: 0.2rem; background: transparent; border: none; color: var(--text-dim); outline: none;">
           <button class="btn-action danger" id="btn-clear-bg-image" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; display: none; width: fit-content; margin-top: 0.2rem;">❌ إزالة الصورة المرجعية</button>
+        </div>
+
+        <div class="form-group" style="border-top: 1px solid rgba(212,163,67,0.1); padding-top: 0.6rem; display: flex; flex-direction: column; gap: 0.3rem;">
+          <label style="color: var(--gold-light); font-size: 0.75rem; font-weight: bold;">🌐 إعدادات الرفع لـ GitHub</label>
+          <input type="password" id="github-token" class="form-input" placeholder="رمز المرور (PAT)..." style="background: rgba(0,0,0,0.35); border: 1px solid rgba(212,163,67,0.2); border-radius: 8px; padding: 0.4rem; color: white; font-family: inherit; font-size: 0.7rem; outline: none; margin-bottom: 0.3rem;">
+          <input type="text" id="github-repo" class="form-input" placeholder="المستودع (مثال: user/repo)" style="background: rgba(0,0,0,0.35); border: 1px solid rgba(212,163,67,0.2); border-radius: 8px; padding: 0.4rem; color: white; font-family: inherit; font-size: 0.7rem; outline: none;">
         </div>
       </div>
 
@@ -3363,6 +3371,103 @@ function saveAdminSymbol() {
   updateHomeStats();
 }
 
+// Helper to safely encode UTF-8 to Base64
+function utoa(data) {
+  return btoa(unescape(encodeURIComponent(data)));
+}
+
+async function pushToGitHub() {
+  const token = $('#github-token').value.trim();
+  const repo = $('#github-repo').value.trim();
+  
+  if (!token || !repo) {
+    alert('يرجى إدخال رمز جيت هاب (PAT) واسم المستودع أولاً!');
+    return;
+  }
+  
+  try {
+    showToast('جاري تحضير الملف للرفع...', '⏳');
+    
+    // Step 1: Generate updated HTML text
+    let htmlText = '';
+    try {
+      const response = await fetch(location.href);
+      htmlText = await response.text();
+    } catch (fetchErr) {
+      console.warn('Fetch local source code failed. Falling back to DOM serialization.');
+      htmlText = '<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n' + document.documentElement.outerHTML + '\n</html>';
+    }
+    
+    const cleanSymbols = SYMBOLS.map(s => {
+      return {
+        id: s.id, unicode: s.unicode, name: s.name, nameShort: s.nameShort,
+        meaning: s.meaning, category: s.category, difficulty: s.difficulty, info: s.info,
+        strokes: s.strokes.map(st => ({ id: st.id, label: st.label, points: st.points, type: st.type }))
+      };
+    });
+    
+    const databaseBlock = `/* DATABASE_START */\nwindow.CUNEIFORM_DATABASE = ${JSON.stringify(cleanSymbols, null, 2)};\n/* DATABASE_END */`;
+    
+    const pattern = /\/\* DATABASE_START \*\/[\s\S]*?\/\* DATABASE_END \*\//;
+    if (htmlText.match(pattern)) {
+      htmlText = htmlText.replace(pattern, databaseBlock);
+    } else {
+      const fallbackPattern = /\/\*\s*DATABASE_START\s*\*\/[\s\S]*?\/\*\s*DATABASE_END\s*\*\//;
+      if (htmlText.match(fallbackPattern)) {
+        htmlText = htmlText.replace(fallbackPattern, databaseBlock);
+      } else {
+        alert('خطأ: لم يتم العثور على منطقة تعريف قاعدة البيانات في الكود المصدري.');
+        return;
+      }
+    }
+    
+    // Step 2: Fetch current sha from GitHub API
+    showToast('جاري التخاطب مع سيرفرات GitHub...', '🌐');
+    const apiUrl = `https://api.github.com/repos/${repo}/contents/index.html`;
+    
+    const getRes = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    
+    if (!getRes.ok) {
+      throw new Error('فشل جلب الملف من جيت هاب. تأكد من الرمز (Token) واسم المستودع.');
+    }
+    
+    const fileData = await getRes.json();
+    const sha = fileData.sha;
+    
+    // Step 3: Put updated content
+    showToast('جاري رفع التحديث الأونلاين...', '🚀');
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: 'Update Cuneiform symbols database via Online CMS',
+        content: utoa(htmlText),
+        sha: sha
+      })
+    });
+    
+    if (!putRes.ok) {
+      throw new Error('فشل الرفع إلى جيت هاب. تأكد أن الرمز له صلاحيات التعديل (repo).');
+    }
+    
+    showToast('تم رفع وتحديث الموقع أونلاين بنجاح! 🎉', '✅');
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+    showToast('حدث خطأ أثناء الرفع.', '❌');
+  }
+}
+
 async function exportUpdatedWebsite() {
   try {
     showToast('جاري تصدير الموقع المحدث...', '⏳');
@@ -3413,7 +3518,33 @@ async function exportUpdatedWebsite() {
       }
     }
     
-    // Trigger download of updated index.html
+    // Trigger download or save directly
+    if ('showSaveFilePicker' in window) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: 'index.html',
+          types: [{
+            description: 'HTML File',
+            accept: {'text/html': ['.html']},
+          }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(htmlText);
+        await writable.close();
+        showToast('تم تحديث ملف index.html مباشرة بنجاح! 🎉', '✓');
+        return;
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error(err);
+          showToast('فشل التحديث المباشر، جاري التحميل...', '⚠️');
+        } else {
+          showToast('تم إلغاء الحفظ.', '⚠️');
+          return;
+        }
+      }
+    }
+    
+    // Fallback
     const blob = new Blob([htmlText], { type: 'text/html;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -3586,6 +3717,29 @@ function initEvents() {
   const btnExportWebsite = $('#btn-export-website');
   if (btnExportWebsite) {
     btnExportWebsite.addEventListener('click', exportUpdatedWebsite);
+  }
+
+  const btnGithubExport = $('#btn-github-export');
+  if (btnGithubExport) {
+    btnGithubExport.addEventListener('click', pushToGitHub);
+  }
+
+  // GitHub Settings Config Logic
+  const githubTokenInput = $('#github-token');
+  const githubRepoInput = $('#github-repo');
+  if (githubTokenInput && githubRepoInput) {
+    const config = JSON.parse(localStorage.getItem('cuneiform_github_config')) || {};
+    if (config.token) githubTokenInput.value = config.token;
+    if (config.repo) githubRepoInput.value = config.repo;
+    
+    const saveConfig = () => {
+      localStorage.setItem('cuneiform_github_config', JSON.stringify({
+        token: githubTokenInput.value.trim(),
+        repo: githubRepoInput.value.trim()
+      }));
+    };
+    githubTokenInput.addEventListener('input', saveConfig);
+    githubRepoInput.addEventListener('input', saveConfig);
   }
   
   const btnSaveSymbol = $('#btn-save-symbol');
