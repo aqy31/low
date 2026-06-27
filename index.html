@@ -1116,8 +1116,9 @@ html, body {
 }
 
 @media (max-width: 480px) {
-  .practice-header { flex-wrap: wrap; padding: 0.8rem 1rem; }
-  .practice-actions { width: 100%; justify-content: space-between; }
+  .practice-header { flex-wrap: nowrap !important; padding: 0.4rem 0.5rem !important; }
+  .practice-actions { width: auto; justify-content: flex-start; gap: 0.4rem !important; }
+  .btn-action { padding: 0.4rem 0.6rem !important; font-size: 0.75rem !important; }
   .home-stats { gap: 1rem; }
   .stat-box { min-width: 90px; padding: 0.8rem 1rem; }
 }
@@ -1413,38 +1414,7 @@ html, body {
   text-align: center;
 }
 
-/* Mobile Overrides for Stylus Panel */
-@media (max-width: 768px) {
-  .stylus-panel {
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 1rem;
-    padding: 0.8rem;
-    overflow-y: visible;
-  }
-  .stylus-panel .panel-section {
-    flex: 1;
-    min-width: 140px;
-    border-bottom: none;
-    padding-bottom: 0;
-    border-right: 1px solid rgba(212, 163, 67, 0.08);
-    padding-right: 0.5rem;
-  }
-  .stylus-panel .panel-section:last-child {
-    border-right: none;
-    padding-right: 0;
-  }
-  .stylus-types {
-    flex-direction: row;
-  }
-  .stylus-type-btn {
-    flex: 1;
-    justify-content: center;
-    font-size: 0.75rem;
-  }
-}
-
+/* Mobile Overrides for Stylus Panel removed (moved to the bottom of the file) */
 /* ============================================
    USER REQUESTED UI SIMPLIFICATIONS
    ============================================ */
@@ -1471,33 +1441,59 @@ html, body {
 
 #btn-submit { display: none !important; }
 
+.practice-header { padding: 0.5rem 1rem !important; }
+.practice-body { padding: 0.5rem !important; gap: 0.5rem !important; }
+.stylus-panel { width: 140px; padding: 0.8rem; gap: 0.8rem; }
+.canvas-container { border-width: 4px; border-radius: 16px; }
+
 @media (max-width: 768px) {
-  .practice-body { flex-direction: row !important; padding: 0.2rem !important; }
-  .stylus-panel { width: 60px !important; padding: 0.5rem 0.2rem !important; gap: 0.8rem !important; flex-direction: column !important; overflow-y: auto !important; }
+  .practice-body { flex-direction: column !important; padding: 0 !important; gap: 0 !important; }
+  .stylus-panel { 
+    width: 100% !important; 
+    height: 60px !important;
+    padding: 0.2rem 0.8rem !important; 
+    gap: 1rem !important; 
+    flex-direction: row !important; 
+    overflow-x: auto !important; 
+    overflow-y: hidden !important; 
+    border: none !important;
+    border-bottom: 1px solid rgba(212, 163, 67, 0.08) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    align-items: center !important;
+  }
+  .stylus-panel::-webkit-scrollbar { display: none; }
   .stylus-panel .stroke-guide-title { display: none !important; }
   .stylus-panel .panel-section {
-    border-bottom: 1px solid rgba(212, 163, 67, 0.08) !important;
+    border-bottom: none !important;
+    border-left: 1px solid rgba(212, 163, 67, 0.15) !important;
     border-right: none !important;
-    padding-bottom: 0.5rem !important;
+    padding-bottom: 0 !important;
+    padding-left: 1rem !important;
     padding-right: 0 !important;
     min-width: unset !important;
     flex: none !important;
     display: flex !important;
-    flex-direction: column !important;
+    flex-direction: row !important;
     align-items: center !important;
+    gap: 0.5rem !important;
   }
-  .stylus-types { flex-direction: column !important; gap: 0.5rem !important; }
-  .stylus-type-btn { width: 38px !important; height: 38px !important; border-radius: 50% !important; justify-content: center !important; font-size: 1.4rem !important; padding: 0 !important; }
+  .stylus-panel .panel-section:last-child {
+    border-left: none !important;
+  }
+  .stylus-types { flex-direction: row !important; gap: 0.8rem !important; }
+  .stylus-type-btn { width: 36px !important; height: 36px !important; border-radius: 50% !important; justify-content: center !important; font-size: 1.2rem !important; padding: 0 !important; }
   .section-label { display: none !important; }
-  .color-presets { flex-direction: column !important; align-items: center !important; gap: 0.5rem !important; }
+  .color-presets { flex-direction: row !important; align-items: center !important; gap: 0.8rem !important; }
   .color-preset-btn { width: 28px !important; height: 28px !important; margin: 0 !important; }
   #stylus-size, #stylus-size-val { display: none !important; }
-  .canvas-container { border-width: 2px !important; border-radius: 12px !important; }
+  .canvas-container { border: none !important; border-radius: 0 !important; width: 100% !important; height: 100% !important; margin: 0 !important; outline: none !important; box-shadow: none !important; }
+  .canvas-area { padding: 0 !important; margin: 0 !important; flex: 1 !important; display: flex !important; width: 100% !important; }
+  .modal { padding: 1.2rem !important; max-height: 85vh !important; overflow-y: auto !important; }
+  .result-btns { flex-wrap: wrap !important; gap: 0.5rem !important; }
+  .result-btns .btn-action { padding: 0.5rem 0.8rem !important; font-size: 0.85rem !important; flex: 1; justify-content: center; }
 }
-
-.practice-header { padding: 0.5rem 1rem !important; }
-.practice-body { padding: 0.5rem !important; gap: 0.5rem !important; }
-.stylus-panel { width: 140px !important; padding: 0.8rem !important; gap: 0.8rem !important; }
 .canvas-container { border-width: 4px !important; border-radius: 16px !important; }
 </style>
 </head>
@@ -1727,7 +1723,7 @@ html, body {
       <div class="result-stars" id="result-stars">☆☆☆☆☆</div>
       <div class="result-details" id="result-details"></div>
       <div class="result-btns">
-        <button class="btn-action" id="btn-retry">🔄 إعادة المحاولة</button>
+        <button class="btn-action" id="btn-exit" style="background: rgba(212, 163, 67, 0.2);">❌ الخروج</button>
         <button class="btn-action primary" id="btn-next-symbol">التالي ←</button>
       </div>
     </div>
@@ -4453,33 +4449,35 @@ function initCanvas() {
   const container = $('#canvas-container');
   const parent = container.parentElement;
   
-  const maxW = parent.clientWidth - 20;
-  const maxH = parent.clientHeight - 20;
-  const size = Math.min(maxW, maxH, 500);
+  const isMobile = window.innerWidth <= 768;
+  const maxW = parent.clientWidth - (isMobile ? 0 : 20);
+  const maxH = parent.clientHeight - (isMobile ? 0 : 20);
+  const sizeX = isMobile ? maxW : Math.min(maxW, maxH, window.innerWidth > 768 ? 600 : 2000);
+  const sizeY = isMobile ? maxH : Math.min(maxW, maxH, window.innerWidth > 768 ? 600 : 2000);
   
-  canvas.width = size;
-  canvas.height = size;
-  canvasW = size;
-  canvasH = size;
+  canvas.width = sizeX;
+  canvas.height = sizeY;
+  canvasW = sizeX;
+  canvasH = sizeY;
   
   ctx = canvas.getContext('2d');
   
   // Pre-render clay base to offscreen canvas
   clayCacheCanvas = document.createElement('canvas');
-  clayCacheCanvas.width = size;
-  clayCacheCanvas.height = size;
+  clayCacheCanvas.width = sizeX;
+  clayCacheCanvas.height = sizeY;
   const cacheCtx = clayCacheCanvas.getContext('2d');
   
   // Clay texture background (richer pillow shape gradient)
-  const gradient = cacheCtx.createRadialGradient(size*0.4, size*0.4, 0, size*0.5, size*0.5, size*0.75);
+  const gradient = cacheCtx.createRadialGradient(sizeX*0.4, sizeY*0.4, 0, sizeX*0.5, sizeY*0.5, Math.max(sizeX, sizeY)*0.75);
   gradient.addColorStop(0, '#dfb27c');
   gradient.addColorStop(0.5, '#c08d51');
   gradient.addColorStop(1, '#744e23');
   cacheCtx.fillStyle = gradient;
-  cacheCtx.fillRect(0, 0, size, size);
+  cacheCtx.fillRect(0, 0, sizeX, sizeY);
 
   // Clay texture noise (sandy grain noise)
-  const imageData = cacheCtx.getImageData(0, 0, size, size);
+  const imageData = cacheCtx.getImageData(0, 0, sizeX, sizeY);
   const data = imageData.data;
   for (let i = 0; i < data.length; i += 4) {
     const noise = (Math.random() - 0.5) * 20;
@@ -5873,7 +5871,7 @@ function initEvents() {
   $('#mode-guided').addEventListener('click', () => setMode('guided'));
   $('#mode-free').addEventListener('click', () => setMode('free'));
   
-  $('#btn-retry').addEventListener('click', retryPractice);
+  $('#btn-exit').addEventListener('click', () => { hideResult(); showScreen('home'); renderGallery(); });
   $('#btn-next-symbol').addEventListener('click', nextSymbol);
   
   $('#result-modal').addEventListener('click', (e) => {
