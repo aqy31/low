@@ -7,6 +7,14 @@
 <meta name="description" content="تعلم الكتابة المسمارية السومرية بطريقة تفاعلية مع محاكاة القلم الخشبي على الطين">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600;700;800;900&family=Cinzel:wght@600;800;900&family=Noto+Sans+Arabic:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
+@font-face {
+  font-family: 'AssyrianFont';
+  src: url('./AssyrianFont.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --clay-light: #e5bd8d;
   --clay-mid: #c69457;
@@ -546,6 +554,7 @@ html, body {
 }
 
 .card-cuneiform {
+  font-family: 'AssyrianFont', 'Segoe UI', sans-serif;
   font-size: 3.8rem;
   margin-bottom: 0.6rem;
   display: block;
@@ -622,6 +631,7 @@ html, body {
   gap: 0.8rem;
 }
 .practice-cuneiform {
+  font-family: 'AssyrianFont', 'Segoe UI', sans-serif;
   font-size: 2.5rem;
   color: var(--clay-light);
   filter: drop-shadow(0 2px 6px rgba(212, 163, 67, 0.3));
@@ -1489,7 +1499,7 @@ html, body {
   .color-preset-btn { width: 28px !important; height: 28px !important; margin: 0 !important; }
   .canvas-container { border: none !important; border-radius: 0 !important; width: 100% !important; height: 100% !important; margin: 0 !important; outline: none !important; box-shadow: none !important; }
   .canvas-area { padding: 0 !important; margin: 0 !important; flex: 1 !important; display: flex !important; width: 100% !important; }
-  .modal { padding: 1.2rem !important; max-height: 85vh !important; overflow-y: auto !important; }
+  .modal { padding: 1.2rem !important; max-height: 85vh !important; overflow-y: hidden !important; }
   .result-btns { flex-wrap: wrap !important; gap: 0.5rem !important; }
   .result-btns .btn-action { padding: 0.5rem 0.8rem !important; font-size: 0.85rem !important; flex: 1; justify-content: center; }
   .toast { padding: 0.5rem 0.8rem !important; font-size: 0.75rem !important; white-space: normal !important; text-align: center !important; max-width: 85% !important; line-height: 1.4 !important; }
@@ -1757,7 +1767,7 @@ html, body {
         <div style="display: flex; gap: 0.5rem;">
           <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 0.3rem;">
             <label for="creator-unicode" style="font-size: 0.75rem; color: var(--text-mid);">الحرف المسماري (𒀭)</label>
-            <input type="text" id="creator-unicode" class="form-input" placeholder="مثال: 𒀀" style="background: rgba(0,0,0,0.35); border: 1px solid rgba(212,163,67,0.2); border-radius: 8px; padding: 0.5rem; color: white; font-family: inherit; font-size: 1rem; text-align: center; outline: none;">
+            <input type="text" id="creator-unicode" class="form-input" placeholder="مثال: 𒀀" style="background: rgba(0,0,0,0.35); border: 1px solid rgba(212,163,67,0.2); border-radius: 8px; padding: 0.5rem; color: white; font-family: 'AssyrianFont', inherit; font-size: 1.2rem; text-align: center; outline: none;">
           </div>
           <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 0.3rem;">
             <label for="creator-category" style="font-size: 0.75rem; color: var(--text-mid);">التصنيف</label>
@@ -5195,7 +5205,7 @@ function showResult(score) {
       نسبة الخطأ: ${errorRate}%
     </div>
     <div style="background: rgba(212,163,67,0.05); border: 1px solid rgba(212,163,67,0.2); border-radius: 12px; padding: 1.5rem; width: 100%;">
-      <div style="font-size: 4rem; color: var(--clay-light); line-height: 1; margin-bottom: 0.5rem; filter: drop-shadow(0 2px 4px rgba(212,163,67,0.3));">${sym.cuneiform}</div>
+      <div style="font-family: 'AssyrianFont', sans-serif; font-size: 4rem; color: var(--clay-light); line-height: 1; margin-bottom: 0.5rem; filter: drop-shadow(0 2px 4px rgba(212,163,67,0.3));">${sym.cuneiform}</div>
       <div style="font-size: 1.3rem; font-weight: bold; color: var(--gold-light);">${sym.name}</div>
       <div style="font-size: 1rem; color: var(--text-mid); margin-top: 0.5rem;">${sym.meaning}</div>
     </div>
@@ -5232,29 +5242,31 @@ function initAdminCanvas() {
   adminCanvas = $('#creator-canvas');
   const container = $('#admin-canvas-container');
   const parent = container.parentElement;
-  const size = Math.min(parent.clientWidth - 20, 800); // 800px instead of 500px
   
-  adminCanvas.width = size;
-  adminCanvas.height = size;
-  adminCanvasW = size;
-  adminCanvasH = size;
+  const sizeX = parent.clientWidth - 20;
+  const sizeY = parent.clientHeight - 20;
+  
+  adminCanvas.width = sizeX;
+  adminCanvas.height = sizeY;
+  adminCanvasW = sizeX;
+  adminCanvasH = sizeY;
   
   adminCtx = adminCanvas.getContext('2d');
   
   // Pre-render clay base for admin
   adminClayCache = document.createElement('canvas');
-  adminClayCache.width = size;
-  adminClayCache.height = size;
+  adminClayCache.width = sizeX;
+  adminClayCache.height = sizeY;
   const cacheCtx = adminClayCache.getContext('2d');
   
-  const gradient = cacheCtx.createRadialGradient(size*0.4, size*0.4, 0, size*0.5, size*0.5, size*0.75);
+  const gradient = cacheCtx.createRadialGradient(sizeX*0.4, sizeY*0.4, 0, sizeX*0.5, sizeY*0.5, Math.max(sizeX, sizeY)*0.75);
   gradient.addColorStop(0, '#dfb27c');
   gradient.addColorStop(0.5, '#c08d51');
   gradient.addColorStop(1, '#744e23');
   cacheCtx.fillStyle = gradient;
-  cacheCtx.fillRect(0, 0, size, size);
+  cacheCtx.fillRect(0, 0, sizeX, sizeY);
 
-  const imageData = cacheCtx.getImageData(0, 0, size, size);
+  const imageData = cacheCtx.getImageData(0, 0, sizeX, sizeY);
   const data = imageData.data;
   for (let i = 0; i < data.length; i += 4) {
     const noise = (Math.random() - 0.5) * 20;
