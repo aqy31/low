@@ -1965,7 +1965,7 @@ html, body {
   </div>
 
   <!-- Toast Container -->
-  <div class="toast-container" id="toast-container"><div class="toast"><span>⏳</span> جاري تصدير الموقع المحدث...</div><div class="toast"><span>💾</span> تمت إضافة الرمز المخصص لقائمتك! 🎉</div><div class="toast"><span>⏳</span> جاري تصدير الموقع المحدث...</div></div>
+  <div class="toast-container" id="toast-container"></div>
 </div>
 
 <!-- Load Database File Dynamically -->
@@ -4010,7 +4010,7 @@ const audio = new AudioEngine();
 function $(sel) { return document.querySelector(sel); }
 function $$(sel) { return document.querySelectorAll(sel); }
 
-function showScreen(name) {
+function showScreen(name, pushState = true) {
   $$('.screen').forEach(s => s.classList.remove('active'));
   $(`#${name}-screen`).classList.add('active');
   state.currentScreen = name;
@@ -4018,7 +4018,19 @@ function showScreen(name) {
   if (settingsBtn) {
     settingsBtn.style.display = (name === 'practice') ? 'none' : 'flex';
   }
+  
+  if (pushState) {
+    history.pushState({ screen: name }, '', '#' + name);
+  }
 }
+
+window.addEventListener('popstate', (e) => {
+  if (e.state && e.state.screen) {
+    showScreen(e.state.screen, false);
+  } else {
+    showScreen('home', false);
+  }
+});
 
 function showToast(msg, icon = '✦') {
   const container = $('#toast-container');
@@ -5514,7 +5526,15 @@ async function pushToGitHub() {
       htmlText = await response.text();
     } catch (fetchErr) {
       console.warn('Fetch local source code failed. Falling back to DOM serialization.');
+      // Temporarily clear toasts before capturing DOM
+      const toastContainer = document.getElementById('toast-container');
+      const originalToasts = toastContainer ? toastContainer.innerHTML : '';
+      if (toastContainer) toastContainer.innerHTML = '';
+      
       htmlText = '<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n' + document.documentElement.outerHTML + '\n</html>';
+      
+      // Restore toasts
+      if (toastContainer) toastContainer.innerHTML = originalToasts;
     }
     
     // FIX: Ensure exported HTML opens on home screen
@@ -6125,6 +6145,10 @@ function init() {
     content.style.opacity = '1';
     content.style.transform = 'translateY(0)';
   }, 200);
+  
+  if (!history.state || !history.state.screen) {
+    history.replaceState({ screen: 'home' }, '', '#home');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
