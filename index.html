@@ -1461,7 +1461,7 @@ html, body {
   .stylus-panel { 
     width: 100% !important; 
     height: 60px !important;
-    padding: 0.2rem 0.8rem !important; 
+    padding: 0.2rem 0.8rem 1.5rem !important; 
     gap: 1rem !important; 
     flex-direction: row !important; 
     overflow-x: auto !important; 
@@ -1502,13 +1502,16 @@ html, body {
   .modal { padding: 1.2rem !important; max-height: 85vh !important; overflow-y: hidden !important; }
   .result-btns { flex-wrap: wrap !important; gap: 0.5rem !important; }
   .result-btns .btn-action { padding: 0.5rem 0.8rem !important; font-size: 0.85rem !important; flex: 1; justify-content: center; }
-  .toast { padding: 0.5rem 0.8rem !important; font-size: 0.75rem !important; white-space: normal !important; text-align: center !important; max-width: 85% !important; line-height: 1.4 !important; }
+  .toast { padding: 0.3rem 0.6rem !important; font-size: 0.65rem !important; white-space: normal !important; text-align: center !important; max-width: 80% !important; line-height: 1.3 !important; border-radius: 8px !important; }
   .toast-container { width: 100% !important; align-items: center !important; top: 0.5rem !important; }
 }
 .canvas-container { border-width: 4px !important; border-radius: 16px !important; }
 </style>
 </head>
 <body>
+<div id="virtual-pen" style="display: none; position: fixed; pointer-events: none; z-index: 9999; transform-origin: top left; transition: opacity 0.1s;">
+  <span style="font-size: 3.5rem; display: block; transform: rotate(-45deg) translate(-10px, -10px); filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5));">🖊️</span>
+</div>
 <div id="app">
   <button class="btn-global-settings" id="btn-global-settings" title="الإعدادات">⚙️</button>
 
@@ -1619,6 +1622,10 @@ html, body {
           <span id="stylus-size-val" style="display:none;">14px</span>
         </div>
         <div class="mode-toggle">
+          <button class="mode-btn active" id="tool-finger" title="الرسم بالإصبع">👆</button>
+          <button class="mode-btn" id="tool-pen" title="الرسم بقلم افتراضي">🪄</button>
+        </div>
+        <div class="mode-toggle">
           <button class="mode-btn active" data-mode="guided" id="mode-guided">موجّه</button>
           <button class="mode-btn" data-mode="free" id="mode-free">حر</button>
         </div>
@@ -1638,7 +1645,7 @@ html, body {
       </div>
       
       <div class="canvas-area">
-        <div class="canvas-container" id="canvas-container">
+        <div class="canvas-container" id="canvas-container" style="position: relative; overflow: hidden;">
           <canvas id="clay-canvas"></canvas>
           <div class="canvas-overlay">
             <div class="canvas-mode-badge" id="canvas-mode-badge">الوضع الموجّه — الخط 1</div>
@@ -1820,6 +1827,10 @@ html, body {
           <p style="font-size: 0.8rem; color: var(--text-mid); margin-bottom: 0.8rem;">ارسم الخطوط واحداً تلو الآخر لتسجيل مسارات الكتابة. سيتبعها الطالب بالترتيب المكتوب.</p>
           
           <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 0.8rem; flex-wrap: wrap;">
+            <div class="mode-toggle" style="background: rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden; border: 1px solid rgba(212, 163, 67, 0.2); display: flex;">
+              <button class="mode-btn active" id="admin-tool-finger" title="الرسم بالإصبع" style="padding: 0.3rem 0.6rem; font-size: 1.1rem;">👆</button>
+              <button class="mode-btn" id="admin-tool-pen" title="الرسم بقلم افتراضي" style="padding: 0.3rem 0.6rem; font-size: 1.1rem;">🖊️</button>
+            </div>
             <div class="form-group" style="display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-start;">
               <label style="color: var(--gold-light); font-size: 0.75rem; font-weight: bold;">نوع القلم</label>
               <select id="admin-stylus-type" class="form-input" style="background: rgba(0,0,0,0.35); border: 1px solid rgba(212,163,67,0.2); border-radius: 8px; padding: 0.3rem; color: white; font-size: 0.8rem; outline: none; cursor: pointer;">
@@ -1837,7 +1848,7 @@ html, body {
           </div>
         </div>
         
-        <div class="canvas-container" id="admin-canvas-container">
+        <div class="canvas-container" id="admin-canvas-container" style="flex: 1; width: 100%; min-height: 0;">
           <canvas id="creator-canvas" style="touch-action: none;"></canvas>
           <div class="canvas-overlay">
             <div class="canvas-mode-badge" id="creator-badge">وضع التصميم — الخط 1</div>
@@ -4714,16 +4725,42 @@ function drawWedgeStroke(path, color = null) {
 
 function getCanvasPos(e) {
   const rect = canvas.getBoundingClientRect();
+  let cx = e.clientX;
+  let cy = e.clientY;
+  
+  if (window.isVirtualPen) {
+    cx -= 40;
+    cy -= 60;
+  }
+  
   return {
-    x: (e.clientX - rect.left) * (canvas.width / rect.width),
-    y: (e.clientY - rect.top) * (canvas.height / rect.height)
+    x: (cx - rect.left) * (canvas.width / rect.width),
+    y: (cy - rect.top) * (canvas.height / rect.height)
   };
+}
+
+function updateVirtualPen(e) {
+  if (e) window.lastPointerEvent = e;
+  const vp = $('#virtual-pen');
+  if (!vp) return;
+  
+  if (window.isVirtualPen && window.lastPointerEvent) {
+    vp.style.display = 'block';
+    const tipX = window.lastPointerEvent.clientX - 45;
+    const tipY = window.lastPointerEvent.clientY - 60;
+    vp.style.left = tipX + 'px';
+    vp.style.top = tipY + 'px';
+    vp.style.opacity = (state.drawing || (typeof adminState !== 'undefined' && adminState.drawing)) ? '0.7' : '1';
+  } else {
+    vp.style.display = 'none';
+  }
 }
 
 function onPointerDown(e) {
   if (state.demoPlaying) return;
   e.preventDefault();
   canvas.setPointerCapture(e.pointerId);
+  updateVirtualPen(e);
   
   audio.init();
   state.drawing = true;
@@ -4765,6 +4802,7 @@ function distToSegmentSq(p, v, w) {
 }
 
 function onPointerMove(e) {
+  updateVirtualPen(e);
   if (!state.drawing) return;
   e.preventDefault();
   
@@ -4829,6 +4867,7 @@ function onPointerMove(e) {
 }
 
 function onPointerUp(e) {
+  updateVirtualPen(e);
   if (!state.drawing) return;
   state.drawing = false;
   
@@ -5241,10 +5280,12 @@ function setMode(mode) {
 function initAdminCanvas() {
   adminCanvas = $('#creator-canvas');
   const container = $('#admin-canvas-container');
-  const parent = container.parentElement;
   
-  const sizeX = parent.clientWidth - 20;
-  const sizeY = parent.clientHeight - 20;
+  const isMobile = window.innerWidth <= 768;
+  const maxW = container.clientWidth - (isMobile ? 0 : 20);
+  const maxH = container.clientHeight - (isMobile ? 0 : 20);
+  const sizeX = isMobile ? maxW : Math.min(maxW, maxH, window.innerWidth > 768 ? 600 : 2000);
+  const sizeY = isMobile ? maxH : Math.min(maxW, maxH, window.innerWidth > 768 ? 600 : 2000);
   
   adminCanvas.width = sizeX;
   adminCanvas.height = sizeY;
@@ -5381,15 +5422,24 @@ function drawAdminStroke(path, color = null) {
 
 function getAdminCanvasPos(e) {
   const rect = adminCanvas.getBoundingClientRect();
+  let cx = e.clientX;
+  let cy = e.clientY;
+  
+  if (window.isVirtualPen) {
+    cx -= 40;
+    cy -= 60;
+  }
+  
   return {
-    x: (e.clientX - rect.left) * (adminCanvas.width / rect.width),
-    y: (e.clientY - rect.top) * (adminCanvas.height / rect.height)
+    x: (cx - rect.left) * (adminCanvas.width / rect.width),
+    y: (cy - rect.top) * (adminCanvas.height / rect.height)
   };
 }
 
 function onAdminPointerDown(e) {
   e.preventDefault();
   adminCanvas.setPointerCapture(e.pointerId);
+  updateVirtualPen(e);
   audio.init();
   adminState.drawing = true;
   const pos = getAdminCanvasPos(e);
@@ -5399,6 +5449,7 @@ function onAdminPointerDown(e) {
 }
 
 function onAdminPointerMove(e) {
+  updateVirtualPen(e);
   if (!adminState.drawing) return;
   e.preventDefault();
   
@@ -5430,6 +5481,7 @@ function onAdminPointerMove(e) {
 }
 
 function onAdminPointerUp(e) {
+  updateVirtualPen(e);
   if (!adminState.drawing) return;
   adminState.drawing = false;
   
@@ -5833,6 +5885,35 @@ function initEvents() {
   
   $('#mode-guided').addEventListener('click', () => setMode('guided'));
   $('#mode-free').addEventListener('click', () => setMode('free'));
+  
+  $('#tool-finger').addEventListener('click', () => {
+    window.isVirtualPen = false;
+    $('#tool-finger').classList.add('active');
+    $('#tool-pen').classList.remove('active');
+    updateVirtualPen(window.lastPointerEvent);
+  });
+  $('#tool-pen').addEventListener('click', () => {
+    window.isVirtualPen = true;
+    $('#tool-pen').classList.add('active');
+    $('#tool-finger').classList.remove('active');
+    updateVirtualPen(window.lastPointerEvent);
+  });
+  
+  // Admin screen toggles (sync state)
+  const adminFingerBtn = $('#admin-tool-finger');
+  const adminPenBtn = $('#admin-tool-pen');
+  if (adminFingerBtn) adminFingerBtn.addEventListener('click', () => {
+    window.isVirtualPen = false;
+    adminFingerBtn.classList.add('active');
+    adminPenBtn.classList.remove('active');
+    updateVirtualPen(window.lastPointerEvent);
+  });
+  if (adminPenBtn) adminPenBtn.addEventListener('click', () => {
+    window.isVirtualPen = true;
+    adminPenBtn.classList.add('active');
+    adminFingerBtn.classList.remove('active');
+    updateVirtualPen(window.lastPointerEvent);
+  });
   
   $('#btn-exit').addEventListener('click', () => { hideResult(); showScreen('home'); renderGallery(); });
   $('#btn-next-symbol').addEventListener('click', nextSymbol);
