@@ -1458,12 +1458,41 @@ html, body {
 .home-subtitle,
 .home-features,
 .dedication-card,
-.home-stats {
+.home-stats,
+.gallery-progress-bar,
+.filter-tabs,
+.achievements-bar {
   display: none !important;
 }
 
 #stylus-panel .panel-section:last-child {
   display: none !important;
+}
+
+#btn-submit { display: none !important; }
+
+@media (max-width: 768px) {
+  .practice-body { flex-direction: row !important; padding: 0.2rem !important; }
+  .stylus-panel { width: 60px !important; padding: 0.5rem 0.2rem !important; gap: 0.8rem !important; flex-direction: column !important; overflow-y: auto !important; }
+  .stylus-panel .stroke-guide-title { display: none !important; }
+  .stylus-panel .panel-section {
+    border-bottom: 1px solid rgba(212, 163, 67, 0.08) !important;
+    border-right: none !important;
+    padding-bottom: 0.5rem !important;
+    padding-right: 0 !important;
+    min-width: unset !important;
+    flex: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  .stylus-types { flex-direction: column !important; gap: 0.5rem !important; }
+  .stylus-type-btn { width: 38px !important; height: 38px !important; border-radius: 50% !important; justify-content: center !important; font-size: 1.4rem !important; padding: 0 !important; }
+  .section-label { display: none !important; }
+  .color-presets { flex-direction: column !important; align-items: center !important; gap: 0.5rem !important; }
+  .color-preset-btn { width: 28px !important; height: 28px !important; margin: 0 !important; }
+  #stylus-size, #stylus-size-val { display: none !important; }
+  .canvas-container { border-width: 2px !important; border-radius: 12px !important; }
 }
 
 .practice-header { padding: 0.5rem 1rem !important; }
@@ -1617,9 +1646,9 @@ html, body {
         <div class="panel-section">
           <div class="section-label">أداة الكتابة</div>
           <div class="stylus-types">
-            <button class="stylus-type-btn active" data-type="pencil" id="type-pencil">✏️ رصاص</button>
-            <button class="stylus-type-btn" data-type="magic" id="type-magic">🖍️ ماجك</button>
-            <button class="stylus-type-btn" data-type="calligraphy" id="type-calligraphy">🖋️ خط عربي</button>
+            <button class="stylus-type-btn active" data-type="pencil" id="type-pencil" title="رصاص">✏️</button>
+            <button class="stylus-type-btn" data-type="magic" id="type-magic" title="ماجك">🖍️</button>
+            <button class="stylus-type-btn" data-type="calligraphy" id="type-calligraphy" title="خط عربي">🖋️</button>
           </div>
         </div>
 
@@ -4782,8 +4811,8 @@ function onPointerMove(e) {
         }
         const distToPath = Math.sqrt(minDistSq);
         
-        // Very Strict Validation: Maximum deviation is 5% of the canvas width
-        if (distToPath > 0.05) {
+        // Extremely Strict Validation: Maximum deviation is 1.5% of the canvas width
+        if (distToPath > 0.015) {
           state.drawing = false;
           state.currentPath = [];
           redrawCanvas();
@@ -4856,12 +4885,20 @@ function onPointerUp(e) {
       
       renderStrokeList();
       redrawCanvas();
+      
+      if (state.currentStroke >= sym.strokes.length) {
+        setTimeout(submitPractice, 600);
+      }
     }
   } else {
     state.drawPaths.push({
       path: [...state.currentPath],
       score: null
     });
+    
+    if (state.drawPaths.length >= sym.strokes.length) {
+      setTimeout(submitPractice, 600);
+    }
   }
   
   state.currentPath = [];
@@ -5191,17 +5228,27 @@ function showResult(score) {
   const best = Math.max(...strokeScores, 0);
   
   $('#result-details').innerHTML = `
-    <div class="result-detail-item">
-      <div class="rdv">${strokeScores.length}/${sym.strokes.length}</div>
-      <div class="rdl">خطوط مكتملة</div>
-    </div>
-    <div class="result-detail-item">
-      <div class="rdv">${best}%</div>
-      <div class="rdl">أفضل خط</div>
-    </div>
-    <div class="result-detail-item">
-      <div class="rdv">${state.scores[sym.id].attempts}</div>
-      <div class="rdl">محاولات</div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 1.2rem; width: 100%;">
+      <div style="background: rgba(212,163,67,0.05); border: 1px solid rgba(212,163,67,0.2); border-radius: 12px; padding: 1rem; width: 100%;">
+        <div style="font-size: 3.5rem; color: var(--clay-light); line-height: 1; margin-bottom: 0.5rem; filter: drop-shadow(0 2px 4px rgba(212,163,67,0.3));">${sym.cuneiform}</div>
+        <div style="font-size: 1.1rem; font-weight: bold; color: var(--gold-light);">${sym.name}</div>
+        <div style="font-size: 0.9rem; color: var(--text-mid); margin-top: 0.2rem;">${sym.meaning}</div>
+      </div>
+      
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <div class="result-detail-item">
+          <div class="rdv">${strokeScores.length}/${sym.strokes.length}</div>
+          <div class="rdl">خطوط مكتملة</div>
+        </div>
+        <div class="result-detail-item">
+          <div class="rdv">${best}%</div>
+          <div class="rdl">أفضل خط</div>
+        </div>
+        <div class="result-detail-item">
+          <div class="rdv">${state.scores[sym.id].attempts}</div>
+          <div class="rdl">محاولات</div>
+        </div>
+      </div>
     </div>
   `;
   
